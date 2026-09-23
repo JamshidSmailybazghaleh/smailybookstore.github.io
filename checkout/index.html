@@ -1,0 +1,171 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html,body,input,button {
+  font-family: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
+}
+body {
+  direction: rtl;
+  text-align: right;
+  margin: 24px;
+  line-height: 1.8;
+}
+input,button {
+  font-size: 16px;
+  padding: 10px;
+  margin: 6px 0;
+}
+</style><title>حکمت نور — ثبت سفارش</title></head><body><h1>حکمت نور</h1>
+<div id="price">
+  <strong>قیمت: ۲۹۸٬۰۰۰ تومان</strong>
+</div>
+<div id="order"></div>
+<form id="orderForm">
+  <input id="buyerName" type="text" placeholder="نام خریدار" required>
+  <input id="buyerEmail" type="email" placeholder="ایمیل" required>
+  <fieldset>
+    <legend>روش پرداخت</legend>
+    <label>
+      <input type="radio" name="paymentMethod" value="rial" required>
+      پرداخت ریالی
+    </label>
+    <label>
+      <input type="radio" name="paymentMethod" value="crypto">
+      پرداخت رمزارزی
+    </label>
+  </fieldset>
+
+  <div id="cryptoDetails" hidden>
+    <h3>پرداخت رمزارزی</h3>
+    <p>شبکه و ارز موردنظر خود را انتخاب کنید.</p>
+
+    <label>
+      <input type="radio" name="cryptoCurrency" value="btc">
+      Bitcoin (BTC)
+    </label>
+
+    <label>
+      <input type="radio" name="cryptoCurrency" value="eth">
+      Ethereum (ETH / ERC-20)
+    </label>
+
+    <label>
+      <input type="radio" name="cryptoCurrency" value="usdt-erc20">
+      USDT (ERC-20)
+    </label>
+
+    <label>
+      <input type="radio" name="cryptoCurrency" value="usdt-trc20">
+      USDT (TRC-20 / TRON)
+    </label>
+
+    <div id="cryptoAddress" hidden>
+      <p><strong>آدرس پرداخت:</strong></p>
+      <p id="cryptoAddressValue"></p>
+    </div>
+  </div>
+
+  <div id="rialDetails" hidden>
+    <h3>پرداخت ریالی</h3>
+
+    <p><strong>بانک پاسارگاد</strong></p>
+    <p>کارت: 5022291051700290</p>
+    <p>حساب: 10664188</p>
+    <p>شبا: IR750570036580010664188101</p>
+
+    <p><strong>بانک سامان</strong></p>
+    <p>کارت: 6219861016845686</p>
+    <p>حساب: 2119208001</p>
+    <p>شبا: IR510560082880002119208001</p>
+  </div>
+
+  <button type="submit">ثبت سفارش</button>
+</form>
+<div id="result"></div>
+<script>
+const productId = "wisdom-light-7X92LF";
+const params = new URLSearchParams(window.location.search);
+const orderId =
+  params.get("order") ||
+  "WL-" + Date.now().toString(36).toUpperCase();
+
+const publicCheckoutUrl =
+  "https://smailybookstore.github.io/checkout/";
+
+const paymentLink =
+  publicCheckoutUrl +
+  "?order=" +
+  encodeURIComponent(orderId);
+const orderStatus = "PENDING";
+
+const cryptoAddresses = {
+  "btc": "bc1qzsv3rx6amuznwwtqywuvwv6ee7hngmhyvvk8yg",
+  "eth": "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
+  "usdt-erc20": "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
+  "usdt-trc20": "TUEPEMoUZWP76CuQAtkrxr1a5Udv4Ub93i"
+};
+
+document.querySelectorAll('input[name="cryptoCurrency"]').forEach(function(input) {
+  input.addEventListener("change", function() {
+    document.getElementById("cryptoAddressValue").textContent =
+      cryptoAddresses[this.value];
+    document.getElementById("cryptoAddress").hidden = false;
+  });
+});
+
+document.querySelectorAll('input[name="paymentMethod"]').forEach(function(input) {
+  input.addEventListener("change", function() {
+    const isRial = this.value === "rial";
+    document.getElementById("rialDetails").hidden = !isRial;
+    document.getElementById("cryptoDetails").hidden = isRial;
+  });
+});
+
+document.getElementById("order").innerHTML =
+      "Product ID: " + productId + "<br>" +
+      "Order ID: " + orderId + "<br>" +
+      "Status: " + orderStatus +
+      "<br><br><strong>لینک سفارش:</strong><br>" +
+      '<a id="paymentLink" href="' + paymentLink +
+      '" target="_blank" rel="noopener" style="word-break:break-all">' +
+      paymentLink + '</a>' +
+      '<br><button type="button" id="copyPaymentLink">کپی لینک سفارش</button>';
+
+document.getElementById("paymentLink").value = paymentLink;
+
+document.getElementById("copyPaymentLink").addEventListener("click", function() {
+  navigator.clipboard.writeText(paymentLink).then(function() {
+    this.textContent = "لینک کپی شد";
+  }.bind(this));
+});
+
+document.getElementById("orderForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const paymentMethod =
+    document.querySelector('input[name="paymentMethod"]:checked')?.value || "";
+
+  const cryptoCurrency =
+    document.querySelector('input[name="cryptoCurrency"]:checked')?.value || "";
+
+  const order = {
+    orderId: orderId,
+    productId: productId,
+    productTitle: "حکمت نور",
+    amount: 298000,
+    currency: "IRR",
+    buyerName: document.getElementById("buyerName").value.trim(),
+    buyerEmail: document.getElementById("buyerEmail").value.trim(),
+    paymentMethod: paymentMethod,
+    cryptoCurrency: cryptoCurrency,
+    status: "PENDING",
+    createdAt: new Date().toISOString()
+  };
+
+  localStorage.setItem("SKOS_ORDER_" + orderId, JSON.stringify(order));
+
+  document.getElementById("result").textContent =
+    "سفارش " + orderId + " با موفقیت ثبت شد. وضعیت: PENDING";
+});
+
+</script></body></html>
