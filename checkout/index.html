@@ -139,7 +139,73 @@ document.getElementById("copyPaymentLink").addEventListener("click", function() 
   }.bind(this));
 });
 
-document.getElementById("orderForm").addEventListener("submit", function(e) {
+document.getElementById("orderForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const paymentMethod =
+    document.querySelector('input[name="paymentMethod"]:checked')?.value || "";
+
+  const cryptoCurrency =
+    document.querySelector('input[name="cryptoCurrency"]:checked')?.value || "";
+
+  const order = {
+    orderId: orderId,
+    productId: productId,
+    productTitle: "حکمت نور",
+    amount: 298000,
+    currency: "IRR",
+    buyer: {
+      name: document.getElementById("buyerName").value.trim(),
+      email: document.getElementById("buyerEmail").value.trim()
+    },
+    paymentMethod: paymentMethod,
+    cryptoCurrency: cryptoCurrency,
+    status: "PENDING",
+    createdAt: new Date().toISOString(),
+    source: "SMAILY_BOOKSTORE"
+  };
+
+  const apiUrl =
+    "https://smaily-commerce-api.iran-jsbsmaily1.workers.dev/commerce/orders";
+
+  try {
+
+    document.getElementById("result").textContent =
+      "در حال ثبت سفارش...";
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(order)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "خطا در ثبت سفارش"
+      );
+    }
+
+    localStorage.setItem(
+      "SKOS_ORDER_" + orderId,
+      JSON.stringify(order)
+    );
+
+    document.getElementById("result").textContent =
+      "سفارش " + orderId +
+      " با موفقیت در Commerce API ثبت شد. وضعیت: " +
+      (data.result?.status || "PENDING");
+
+  } catch (error) {
+
+    document.getElementById("result").textContent =
+      "ثبت سفارش انجام نشد: " +
+      error.message;
+  }
+});
   e.preventDefault();
 
   const paymentMethod =
