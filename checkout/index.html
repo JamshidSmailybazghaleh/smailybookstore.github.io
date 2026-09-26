@@ -1,237 +1,662 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-html,body,input,button {
-  font-family: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
-}
-body {
-  direction: rtl;
-  text-align: right;
-  margin: 24px;
-  line-height: 1.8;
-}
-input,button {
-  font-size: 16px;
-  padding: 10px;
-  margin: 6px 0;
-}
-</style><title>حکمت نور — ثبت سفارش</title></head><body><h1>حکمت نور</h1>
-<div id="price">
-  <strong>قیمت: ۲۹۸٬۰۰۰ تومان</strong>
-</div>
-<div id="order"></div>
-<form id="orderForm">
-  <input id="buyerName" type="text" placeholder="نام خریدار" required>
-  <input id="buyerEmail" type="email" placeholder="ایمیل" required>
-  <fieldset>
-    <legend>روش پرداخت</legend>
-    <label>
-      <input type="radio" name="paymentMethod" value="rial" required>
-      پرداخت ریالی
-    </label>
-    <label>
-      <input type="radio" name="paymentMethod" value="crypto">
-      پرداخت رمزارزی
-    </label>
-  </fieldset>
+<!doctype html>
+<html lang="fa" dir="rtl">
 
-  <div id="cryptoDetails" hidden>
-    <h3>پرداخت رمزارزی</h3>
-    <p>شبکه و ارز موردنظر خود را انتخاب کنید.</p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <label>
-      <input type="radio" name="cryptoCurrency" value="btc">
-      Bitcoin (BTC)
-    </label>
-
-    <label>
-      <input type="radio" name="cryptoCurrency" value="eth">
-      Ethereum (ETH / ERC-20)
-    </label>
-
-    <label>
-      <input type="radio" name="cryptoCurrency" value="usdt-erc20">
-      USDT (ERC-20)
-    </label>
-
-    <label>
-      <input type="radio" name="cryptoCurrency" value="usdt-trc20">
-      USDT (TRC-20 / TRON)
-    </label>
-
-    <div id="cryptoAddress" hidden>
-      <p><strong>آدرس پرداخت:</strong></p>
-      <p id="cryptoAddressValue"></p>
-    </div>
-  </div>
-
-  <div id="rialDetails" hidden>
-    <h3>پرداخت ریالی</h3>
-
-    <p><strong>بانک پاسارگاد</strong></p>
-    <p>کارت: 5022291051700290</p>
-    <p>حساب: 10664188</p>
-    <p>شبا: IR750570036580010664188101</p>
-
-    <p><strong>بانک سامان</strong></p>
-    <p>کارت: 6219861016845686</p>
-    <p>حساب: 2119208001</p>
-    <p>شبا: IR510560082880002119208001</p>
-  </div>
-
-  <button type="submit">ثبت سفارش</button>
-</form>
-<div id="result"></div>
-<script>
-const productId = "wisdom-light-7X92LF";
-const params = new URLSearchParams(window.location.search);
-const orderId =
-  params.get("order") ||
-  "WL-" + Date.now().toString(36).toUpperCase();
-
-const publicCheckoutUrl =
-  "https://smailybookstore.github.io/checkout/";
-
-const paymentLink =
-  publicCheckoutUrl +
-  "?order=" +
-  encodeURIComponent(orderId);
-const orderStatus = "PENDING";
-
-const cryptoAddresses = {
-  "btc": "bc1qzsv3rx6amuznwwtqywuvwv6ee7hngmhyvvk8yg",
-  "eth": "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
-  "usdt-erc20": "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
-  "usdt-trc20": "TUEPEMoUZWP76CuQAtkrxr1a5Udv4Ub93i"
-};
-
-document.querySelectorAll('input[name="cryptoCurrency"]').forEach(function(input) {
-  input.addEventListener("change", function() {
-    document.getElementById("cryptoAddressValue").textContent =
-      cryptoAddresses[this.value];
-    document.getElementById("cryptoAddress").hidden = false;
-  });
-});
-
-document.querySelectorAll('input[name="paymentMethod"]').forEach(function(input) {
-  input.addEventListener("change", function() {
-    const isRial = this.value === "rial";
-    document.getElementById("rialDetails").hidden = !isRial;
-    document.getElementById("cryptoDetails").hidden = isRial;
-  });
-});
-
-document.getElementById("order").innerHTML =
-      "Product ID: " + productId + "<br>" +
-      "Order ID: " + orderId + "<br>" +
-      "Status: " + orderStatus +
-      "<br><br><strong>لینک سفارش:</strong><br>" +
-      '<a id="paymentLink" href="' + paymentLink +
-      '" target="_blank" rel="noopener" style="word-break:break-all">' +
-      paymentLink + '</a>' +
-      '<br><button type="button" id="copyPaymentLink">کپی لینک سفارش</button>';
-
-document.getElementById("paymentLink").value = paymentLink;
-
-document.getElementById("copyPaymentLink").addEventListener("click", function() {
-  navigator.clipboard.writeText(paymentLink).then(function() {
-    this.textContent = "لینک کپی شد";
-  }.bind(this));
-});
-
-document.getElementById("orderForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const paymentMethod =
-    document.querySelector('input[name="paymentMethod"]:checked')?.value || "";
-
-  const cryptoCurrency =
-    document.querySelector('input[name="cryptoCurrency"]:checked')?.value || "";
-
-  const order = {
-    orderId: orderId,
-    productId: productId,
-    productTitle: "حکمت نور",
-    amount: 298000,
-    currency: "IRR",
-    buyer: {
-      name: document.getElementById("buyerName").value.trim(),
-      email: document.getElementById("buyerEmail").value.trim()
-    },
-    paymentMethod: paymentMethod,
-    cryptoCurrency: cryptoCurrency,
-    status: "PENDING",
-    createdAt: new Date().toISOString(),
-    source: "SMAILY_BOOKSTORE"
-  };
-
-  const apiUrl =
-    "https://smaily-commerce-api.iran-jsbsmaily1.workers.dev/commerce/orders";
-
-  try {
-
-    document.getElementById("result").textContent =
-      "در حال ثبت سفارش...";
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(order)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "خطا در ثبت سفارش"
-      );
+  <style>
+    html,
+    body,
+    input,
+    button {
+      font-family: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
     }
 
-    localStorage.setItem(
-      "SKOS_ORDER_" + orderId,
-      JSON.stringify(order)
-    );
+    body {
+      direction: rtl;
+      text-align: right;
+      margin: 24px;
+      line-height: 1.8;
+    }
 
-    document.getElementById("result").textContent =
-      "سفارش " + orderId +
-      " با موفقیت در Commerce API ثبت شد. وضعیت: " +
-      (data.result?.status || "PENDING");
+    input,
+    button {
+      font-size: 16px;
+      padding: 10px;
+      margin: 6px 0;
+    }
+  </style>
 
-  } catch (error) {
+  <title>حکمت نور — ثبت سفارش</title>
+</head>
 
-    document.getElementById("result").textContent =
-      "ثبت سفارش انجام نشد: " +
-      error.message;
-  }
-});
-  e.preventDefault();
+<body>
 
-  const paymentMethod =
-    document.querySelector('input[name="paymentMethod"]:checked')?.value || "";
+  <h1>حکمت نور</h1>
 
-  const cryptoCurrency =
-    document.querySelector('input[name="cryptoCurrency"]:checked')?.value || "";
+  <div id="price">
+    <strong>قیمت: ۲۹۸٬۰۰۰ تومان</strong>
+  </div>
 
-  const order = {
-    orderId: orderId,
-    productId: productId,
-    productTitle: "حکمت نور",
-    amount: 298000,
-    currency: "IRR",
-    buyerName: document.getElementById("buyerName").value.trim(),
-    buyerEmail: document.getElementById("buyerEmail").value.trim(),
-    paymentMethod: paymentMethod,
-    cryptoCurrency: cryptoCurrency,
-    status: "PENDING",
-    createdAt: new Date().toISOString()
-  };
+  <div id="order"></div>
 
-  localStorage.setItem("SKOS_ORDER_" + orderId, JSON.stringify(order));
+  <form id="orderForm">
 
-  document.getElementById("result").textContent =
-    "سفارش " + orderId + " با موفقیت ثبت شد. وضعیت: PENDING";
-});
+    <input
+      id="buyerName"
+      type="text"
+      placeholder="نام خریدار"
+      required
+    >
 
-</script></body></html>
+    <input
+      id="buyerEmail"
+      type="email"
+      placeholder="ایمیل"
+      required
+    >
+
+    <fieldset>
+      <legend>روش پرداخت</legend>
+
+      <label>
+        <input
+          type="radio"
+          name="paymentMethod"
+          value="rial"
+          required
+        >
+        پرداخت ریالی
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="paymentMethod"
+          value="crypto"
+        >
+        پرداخت رمزارزی
+      </label>
+    </fieldset>
+
+
+    <div id="cryptoDetails" hidden>
+
+      <h3>پرداخت رمزارزی</h3>
+
+      <p>
+        شبکه و ارز موردنظر خود را انتخاب کنید.
+      </p>
+
+      <label>
+        <input
+          type="radio"
+          name="cryptoCurrency"
+          value="btc"
+        >
+        Bitcoin (BTC)
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="cryptoCurrency"
+          value="eth"
+        >
+        Ethereum (ETH / ERC-20)
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="cryptoCurrency"
+          value="usdt-erc20"
+        >
+        USDT (ERC-20)
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="cryptoCurrency"
+          value="usdt-trc20"
+        >
+        USDT (TRC-20 / TRON)
+      </label>
+
+      <div id="cryptoAddress" hidden>
+
+        <p>
+          <strong>آدرس پرداخت:</strong>
+        </p>
+
+        <p id="cryptoAddressValue"></p>
+
+      </div>
+
+    </div>
+
+
+    <div id="rialDetails" hidden>
+
+      <h3>پرداخت ریالی</h3>
+
+      <p>
+        <strong>بانک پاسارگاد</strong>
+      </p>
+
+      <p>
+        کارت: 5022291051700290
+      </p>
+
+      <p>
+        حساب: 10664188
+      </p>
+
+      <p>
+        شبا: IR750570036580010664188101
+      </p>
+
+
+      <p>
+        <strong>بانک سامان</strong>
+      </p>
+
+      <p>
+        کارت: 6219861016845686
+      </p>
+
+      <p>
+        حساب: 2119208001
+      </p>
+
+      <p>
+        شبا: IR510560082880002119208001
+      </p>
+
+    </div>
+
+
+    <button type="submit">
+      ثبت سفارش
+    </button>
+
+  </form>
+
+
+  <div id="result"></div>
+
+
+  <script>
+
+    "use strict";
+
+
+    /*
+     * ==========================================================
+     * SMAILY BOOKSTORE
+     * Checkout Runtime
+     * ==========================================================
+     *
+     * Flow:
+     *
+     * Customer
+     *    ↓
+     * Checkout
+     *    ↓
+     * Cloudflare Commerce API
+     *    ↓
+     * Order
+     *
+     * LocalStorage is retained only as a local backup.
+     *
+     * ==========================================================
+     */
+
+
+    const productId =
+      "wisdom-light-7X92LF";
+
+
+    const productTitle =
+      "حکمت نور";
+
+
+    const amount =
+      298000;
+
+
+    const currency =
+      "IRR";
+
+
+    const commerceApiUrl =
+      "https://smaily-commerce-api.iran-jsbsmaily1.workers.dev/commerce/orders";
+
+
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+
+    const orderId =
+      params.get("order") ||
+      "WL-" +
+      Date.now()
+        .toString(36)
+        .toUpperCase();
+
+
+    const publicCheckoutUrl =
+      "https://smailybookstore.github.io/checkout/";
+
+
+    const paymentLink =
+      publicCheckoutUrl +
+      "?order=" +
+      encodeURIComponent(orderId);
+
+
+    const orderStatus =
+      "PENDING";
+
+
+    const cryptoAddresses = {
+
+      "btc":
+        "bc1qzsv3rx6amuznwwtqywuvwv6ee7hngmhyvvk8yg",
+
+      "eth":
+        "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
+
+      "usdt-erc20":
+        "0x7DC23AF1A8aF40232b1a6b8877DB7A1660923743",
+
+      "usdt-trc20":
+        "TUEPEMoUZWP76CuQAtkrxr1a5Udv4Ub93i"
+
+    };
+
+
+    /*
+     * ==========================================================
+     * Crypto currency selection
+     * ==========================================================
+     */
+
+
+    document
+      .querySelectorAll(
+        'input[name="cryptoCurrency"]'
+      )
+      .forEach(
+        function(input) {
+
+          input.addEventListener(
+            "change",
+            function() {
+
+              const address =
+                cryptoAddresses[
+                  this.value
+                ];
+
+              document
+                .getElementById(
+                  "cryptoAddressValue"
+                )
+                .textContent =
+                address || "";
+
+              document
+                .getElementById(
+                  "cryptoAddress"
+                )
+                .hidden =
+                !address;
+
+            }
+          );
+
+        }
+      );
+
+
+    /*
+     * ==========================================================
+     * Payment method selection
+     * ==========================================================
+     */
+
+
+    document
+      .querySelectorAll(
+        'input[name="paymentMethod"]'
+      )
+      .forEach(
+        function(input) {
+
+          input.addEventListener(
+            "change",
+            function() {
+
+              const isRial =
+                this.value === "rial";
+
+
+              document
+                .getElementById(
+                  "rialDetails"
+                )
+                .hidden =
+                !isRial;
+
+
+              document
+                .getElementById(
+                  "cryptoDetails"
+                )
+                .hidden =
+                isRial;
+
+            }
+          );
+
+        }
+      );
+
+
+    /*
+     * ==========================================================
+     * Order information
+     * ==========================================================
+     */
+
+
+    document
+      .getElementById("order")
+      .innerHTML =
+
+        "Product ID: " +
+        productId +
+
+        "<br>" +
+
+        "Order ID: " +
+        orderId +
+
+        "<br>" +
+
+        "Status: " +
+        orderStatus +
+
+        "<br><br>" +
+
+        "<strong>لینک سفارش:</strong>" +
+
+        "<br>" +
+
+        '<a id="paymentLink" ' +
+        'href="' +
+        paymentLink +
+        '" ' +
+        'target="_blank" ' +
+        'rel="noopener" ' +
+        'style="word-break:break-all">' +
+        paymentLink +
+        "</a>" +
+
+        "<br>" +
+
+        '<button type="button" id="copyPaymentLink">' +
+        "کپی لینک سفارش" +
+        "</button>";
+
+
+    /*
+     * ==========================================================
+     * Copy order link
+     * ==========================================================
+     */
+
+
+    document
+      .getElementById(
+        "copyPaymentLink"
+      )
+      .addEventListener(
+        "click",
+        function() {
+
+          navigator
+            .clipboard
+            .writeText(
+              paymentLink
+            )
+            .then(
+              function() {
+
+                this.textContent =
+                  "لینک کپی شد";
+
+              }.bind(this)
+            )
+            .catch(
+              function() {
+
+                this.textContent =
+                  "کپی لینک انجام نشد";
+
+              }.bind(this)
+            );
+
+        }
+      );
+
+
+    /*
+     * ==========================================================
+     * REAL ORDER SUBMISSION
+     * ==========================================================
+     */
+
+
+    document
+      .getElementById("orderForm")
+      .addEventListener(
+        "submit",
+        async function(e) {
+
+          e.preventDefault();
+
+
+          const resultElement =
+            document.getElementById(
+              "result"
+            );
+
+
+          const paymentMethod =
+            document
+              .querySelector(
+                'input[name="paymentMethod"]:checked'
+              )
+              ?.value ||
+            "";
+
+
+          const cryptoCurrency =
+            document
+              .querySelector(
+                'input[name="cryptoCurrency"]:checked'
+              )
+              ?.value ||
+            "";
+
+
+          const buyerName =
+            document
+              .getElementById(
+                "buyerName"
+              )
+              .value
+              .trim();
+
+
+          const buyerEmail =
+            document
+              .getElementById(
+                "buyerEmail"
+              )
+              .value
+              .trim();
+
+
+          const order = {
+
+            orderId:
+              orderId,
+
+            productId:
+              productId,
+
+            productTitle:
+              productTitle,
+
+            amount:
+              amount,
+
+            currency:
+              currency,
+
+            buyer: {
+
+              name:
+                buyerName,
+
+              email:
+                buyerEmail
+
+            },
+
+            paymentMethod:
+              paymentMethod,
+
+            cryptoCurrency:
+              cryptoCurrency,
+
+            status:
+              "PENDING",
+
+            createdAt:
+              new Date()
+                .toISOString(),
+
+            source:
+              "SMAILY_BOOKSTORE"
+
+          };
+
+
+          /*
+           * Local backup before network operation.
+           */
+
+          try {
+
+            localStorage.setItem(
+              "SKOS_ORDER_" +
+              orderId,
+              JSON.stringify(order)
+            );
+
+          } catch (storageError) {
+
+            /*
+             * LocalStorage failure must not
+             * prevent API submission.
+             */
+
+          }
+
+
+          resultElement.textContent =
+            "در حال ثبت سفارش...";
+
+
+          try {
+
+            const response =
+              await fetch(
+                commerceApiUrl,
+                {
+
+                  method:
+                    "POST",
+
+                  headers: {
+
+                    "Content-Type":
+                      "application/json"
+
+                  },
+
+                  body:
+                    JSON.stringify(
+                      order
+                    )
+
+                }
+              );
+
+
+            const data =
+              await response.json();
+
+
+            if (!response.ok) {
+
+              throw new Error(
+                data.message ||
+                "خطا در ثبت سفارش"
+              );
+
+            }
+
+
+            const returnedOrder =
+              data.result ||
+              order;
+
+
+            resultElement.textContent =
+
+              "سفارش " +
+              orderId +
+              " با موفقیت در Commerce API ثبت شد. " +
+              "وضعیت: " +
+              (
+                returnedOrder.status ||
+                "PENDING"
+              );
+
+
+          } catch (error) {
+
+            resultElement.textContent =
+
+              "ثبت سفارش در Commerce API انجام نشد: " +
+              error.message;
+
+          }
+
+        }
+      );
+
+  </script>
+
+</body>
+
+</html>
